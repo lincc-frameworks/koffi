@@ -1,0 +1,5 @@
+.DS_Store
+KOFFI.egg-info/
+__pychache__/
+build/
+dist/
