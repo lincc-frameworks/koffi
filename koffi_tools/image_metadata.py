@@ -178,6 +178,9 @@ class ImageMetadataStack:
     def __getitem__(self, index):
         return self.image_metadatas[index]
 
+    def __len__(self):
+        return len(self.image_metadatas)
+
     def build_from_filenames(self, filenames):
         self.image_metadatas = []
         for f in filenames:

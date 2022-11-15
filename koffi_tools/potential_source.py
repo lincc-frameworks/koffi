@@ -3,22 +3,18 @@ from astropy.io import fits
 from astropy.wcs import WCS
 
 class PotentialSource:
-    def __init__(self, form = "pixel", x=None, y=None, vx=None, vy=None,
-                ra=None, dec=None, vra=None, vdec=None):
+    def __init__(self, times = None):
+        self.position_at = {}
+        self.times = times
 
-        if form != "pixel" and form != "radec":
-            raise ValueError("value 'format' must be either 'pixel' or 'radec'")
+    def __getitem__(self, time):
+        if time not in self.position_at.keys():
+            raise ValueError('no location associated with provided time')
+        return self.position_at[time]
 
-        self.format = form
-            
-        # pixel format
-        self.x = x
-        self.y = y
-        self.vx = vx
-        self.vy = vy
+    def build_from_times_and_known_positions(self, positions, times):
+        if len(positions) != len(times):
+            raise ValueError('number of positions does not match number of times provided')
 
-        # ra/dec format
-        self.ra = ra
-        self.dec = dec
-        self.vra = vra
-        self.vdec = vdec
+        for i in range(len(times)):
+            self.position_at[times[i]] = positions[i]

@@ -1,5 +1,8 @@
 .DS_Store
 KOFFI.egg-info/
 __pycache__/
+koffi_tools/__pycache__/
 build/
 dist/
+
+*.py[cod]

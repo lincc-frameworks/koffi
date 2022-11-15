@@ -21,46 +21,78 @@ from astroquery.jplhorizons import Horizons
 # Import the data_tools packages directly in koffi so that they are
 # accesible at the top level of the package.
 from koffi_tools.image_metadata import *
+from koffi_tools.potential_source import *
 
-def skybot_query_known_objects(image, time_step=-1):
+def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
     given meta data from a FITS file in the form of a
     ImageInfo and adds them to the known objects list.
 
     Arguments:
-       stats : ImageInfo object
+        potential_sources : List of PotentialSource objects
+        image : ImageMetadata object
            The metadata for the current image.
-       time_step : integer
-           The time step to use.
+        tolerance : the allowed separation between objects in arcseconds
     """
 
     # Use SkyBoT to look up the known objects with a conesearch.
     # The function returns a QTable.
     results_table = Skybot.cone_search(image.center, image.approximate_radius(), image.get_epoch())
 
-    # Extract the name and sky coordinates for each object.
-    num_results = len(results_table["Name"])
-    print(num_results)
-    for row in range(num_results):
-        name = results_table["Name"][row]
-        ra = results_table["RA"][row]
-        dec = results_table["DEC"][row]
-        print(str(name) + " " + str(ra) + " " + str(dec))
+    matches = []
 
-def skybot_query_known_objects_mult(self, all_stats):
+    for i in range(len(potential_sources)):
+        ps = potential_sources[i]
+        time = image.get_epoch().mjd
+        ps_coord = SkyCoord(ps[time][0], ps[time][1], unit='deg')
+        num_results = len(results_table["Name"])
+        for row in range(num_results):
+            name = results_table["Name"][row]
+            ra = results_table["RA"][row]
+            dec = results_table["DEC"][row]
+            row_coord = SkyCoord(ra, dec, unit='deg')
+            sep = ps_coord.separation(row_coord)
+            if sep.arcsecond < tolerance:
+                matches.append([i, [name, ra, dec]])
+
+    return matches
+
+def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations = 1):
     """
     Finds all known objects that should appear in a series of
     images given the meta data from the corresponding FITS files.
 
     Arguments:
-        all_stats - An ImageInfoSet object holding the
-                    for the current set of images.
+        potential_sources : List of PotentialSource objects
+        images : an ImageMetadataSet holding the metadata for a stack of images.
+        tolerance : the allowed separation between objects in arcseconds
+        min_obeservations : minimum number of times a source has to be found throughout
+            the frames to be returned in the results.
     """
-    num_time_steps = all_stats.num_images
-    for t in range(num_time_steps):
-        self.skybot_query_known_objects(all_stats.stats[t], t)
-    self.pad_results()
+    matches = {}
+    for i in range(len(potential_sources)):
+        matches[i] = {}
+
+    for image in images:
+        frame_sources = skybot_query_known_objects(potential_sources, image, tolerance)
+        for res in frame_sources:
+            ps_id = res[0]
+            obj_name = res[1][0]
+            if obj_name in matches[ps_id].keys():
+                matches[ps_id][obj_name] += 1
+            else:
+                matches[ps_id][obj_name] = 1
+
+    for ps_id in matches.keys():
+        bad_obs = []
+        for obj in matches[ps_id].keys():
+            if matches[ps_id][obj] < min_observations:
+                bad_obs.append(obj)
+        for rem in bad_obs:
+            matches[ps_id].pop(rem)
+
+    return matches
 
 def create_jpl_query_string(stats):
     """
