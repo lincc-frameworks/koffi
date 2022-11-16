@@ -10,6 +10,7 @@ dependencies = [
     "astropy",
     "astroquery",
     "dask",
+    "tqdm"
 ]
 license = {text = "BSD 3-Clause License"}
 dynamic = ["version"]

@@ -23,6 +23,8 @@ from astroquery.jplhorizons import Horizons
 from koffi_tools.image_metadata import *
 from koffi_tools.potential_source import *
 
+from tqdm import tqdm
+
 def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
@@ -54,7 +56,7 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
             row_coord = SkyCoord(ra, dec, unit='deg')
             sep = ps_coord.separation(row_coord)
             if sep.arcsecond < tolerance:
-                matches.append([i, [name, ra, dec]])
+                matches.append([i, [name, row_coord]])
 
     return matches
 
@@ -74,7 +76,7 @@ def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, m
     for i in range(len(potential_sources)):
         matches[i] = {}
 
-    for image in images:
+    for image in tqdm(images):
         frame_sources = skybot_query_known_objects(potential_sources, image, tolerance)
         for res in frame_sources:
             ps_id = res[0]
@@ -94,13 +96,13 @@ def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, m
 
     return matches
 
-def create_jpl_query_string(stats):
+def create_jpl_query_string(image):
     """
     Create JPL query string out of the component
     information.
 
     Argument:
-        stats : An ImageInfo object holding the
+        image : An ImageMetadata object holding the
                 metadata for the current image.
 
     Returns:
@@ -108,25 +110,25 @@ def create_jpl_query_string(stats):
         if the ImageInfo object does not have sufficient
         information.
     """
-    if not stats.obs_loc_set or stats.center is None:
+    if not image.obs_loc_set or image.center is None:
         return None
 
     base_url = "https://ssd-api.jpl.nasa.gov/sb_ident.api?sb-kind=a&mag-required=true&req-elem=false"
 
     # Format the time query and MPC string.
-    t_str = "obs-time=%f" % stats.get_epoch().jd
+    t_str = "obs-time=%f" % image.get_epoch().jd
 
     # Create a string of data for the observatory.
-    if stats.obs_code:
+    if image.obs_code:
         obs_str = "mpc-code=%s" % self.obs_code
     else:
-        obs_str = "lat=%f&lon=%f&alt=%f" % (stats.obs_lat, stats.obs_long, stats.obs_alt)
+        obs_str = "lat=%f&lon=%f&alt=%f" % (image.obs_lat, image.obs_long, image.obs_alt)
 
     # Format the RA query including half width.
-    if stats.center.ra.degree < 0:
-        stats.center.ra.degree += 360.0
-    ra_hms_L = Angle(stats.center.ra - stats.ra_radius()).hms
-    ra_hms_H = Angle(stats.center.ra + stats.ra_radius()).hms
+    if image.center.ra.degree < 0:
+        image.center.ra.degree += 360.0
+    ra_hms_L = Angle(image.center.ra - image.ra_radius()).hms
+    ra_hms_H = Angle(image.center.ra + image.ra_radius()).hms
     ra_str = "fov-ra-lim=%02i-%02i-%05.2f,%02i-%02i-%05.2f" % (
         ra_hms_L[0],
         ra_hms_L[1],
@@ -138,12 +140,12 @@ def create_jpl_query_string(stats):
 
     # Format the Dec query including half width.
     dec_str = ""
-    dec_dms_L = Angle(stats.center.dec - stats.dec_radius()).dms
+    dec_dms_L = Angle(image.center.dec - image.dec_radius()).dms
     if dec_dms_L[0] >= 0:
         dec_str = "fov-dec-lim=%02i-%02i-%05.2f" % (dec_dms_L[0], dec_dms_L[1], dec_dms_L[2])
     else:
         dec_str = "fov-dec-lim=M%02i-%02i-%05.2f" % (-dec_dms_L[0], -dec_dms_L[1], -dec_dms_L[2])
-    dec_dms_H = Angle(stats.center.dec + stats.dec_radius()).dms
+    dec_dms_H = Angle(image.center.dec + image.dec_radius()).dms
     if dec_dms_H[0] >= 0:
         dec_str = "%s,02i-%02i-%05.2f" % (dec_str, dec_dms_H[0], dec_dms_H[1], dec_dms_H[2])
     else:
@@ -157,28 +159,27 @@ def create_jpl_query_string(stats):
 
     return query
 
-def jpl_query_known_objects(stats, time_step=-1):
+def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
     given meta data from a FITS file in the form of a
     ImageInfo and adds them to the known objects list.
 
     Arguments:
-       stats : ImageInfo object
+       image : ImageMetadata object
            The metadata for the current image.
        time_step : integer
            The time step to use.
     """
-    if time_step == -1:
-        time_step = self.max_time_step + 1
-    self.set_timestamp(time_step, stats.get_epoch())
+    # if time_step == -1:
+    #     time_step = self.max_time_step + 1
+    # self.set_timestamp(time_step, stats.get_epoch())
 
-    query_string = create_jpl_query_string(stats)
+    query_string = create_jpl_query_string(image)
     if not query_string:
-        print("WARNING: Insufficient data in ImageInfo.")
-        return results
+        raise ValueError("WARNING: Insufficient data in image_metadata.")
 
-    print("Querying: %s" % query_string)
+    observations = []
 
     with libreq.urlopen(query_string) as url:
         feed = url.read().decode("utf-8")
@@ -190,10 +191,23 @@ def jpl_query_known_objects(stats, time_step=-1):
             ra_str = item[1]
             dec_str = item[2].replace("'", " ").replace('"', "")
             sc = SkyCoord(ra_str, dec_str, unit=(u.hourangle, u.deg))
-            self.add_observation(name, time_step, sc)
-    return results
+            observations.append([name, sc])
 
-def jpl_query_known_objects_mult(self, all_stats):
+    matches = []
+    for i in range(len(potential_sources)):
+        ps = potential_sources[i]
+        time = image.get_epoch().mjd
+        ps_coord = SkyCoord(ps[time][0], ps[time][1], unit='deg')
+        num_results = len(observations)
+        for row in range(num_results):
+            name = observations[row][0]
+            row_coord = observations[row][1]
+            sep = ps_coord.separation(row_coord)
+            if sep.arcsecond < tolerance:
+                matches.append([i, [name, sc]])
+    return matches
+
+def jpl_query_known_objects_stack(potential_sources, images, tolerance = 0.5, min_observations = 1):
     """
     Finds all known objects that should appear in a series of
     images given the meta data from the corresponding FITS files.
@@ -202,50 +216,28 @@ def jpl_query_known_objects_mult(self, all_stats):
         all_stats - An ImageInfoSet object holding the
                     for the current set of images.
     """
-    num_time_steps = all_stats.num_images
-    for t in range(num_time_steps):
-        self.jpl_query_known_objects(all_stats.stats[t], t)
-    self.pad_results()
+    matches = {}
+    for i in range(len(potential_sources)):
+        matches[i] = {}
 
-def count_known_objects_found(self, found_objects, threshold, num_matches):
-    """
-    Counts the number of found_objects that appear in the
-    list of known objects.
+    print('NOTE: JPL Horizons queries are rate limited and can take up to 5 minutes per query to complete.')
 
-    Arguments:
-       found_objects : list
-           A list of lists with one row for every object.
-       thresh : float
-           The distance threshold for a match (in arcseconds).
-       num_matches : integer
-           The minimum number of matching points.
+    for image in tqdm(images):
+        frame_sources = jpl_query_known_objects(potential_sources, image, tolerance)
+        for res in frame_sources:
+            ps_id = res[0]
+            obj_name = res[1][0]
+            if obj_name in matches[ps_id].keys():
+                matches[ps_id][obj_name] += 1
+            else:
+                matches[ps_id][obj_name] = 1
 
-    Returns:
-       count : integer
-          The number of unique objects found.
-    """
-    num_found = len(found_objects)
-    num_times = len(found_objects[0])
-    used = [False] * num_found
-    match_count = 0
+    for ps_id in matches.keys():
+        bad_obs = []
+        for obj in matches[ps_id].keys():
+            if matches[ps_id][obj] < min_observations:
+                bad_obs.append(obj)
+        for rem in bad_obs:
+            matches[ps_id].pop(rem)
 
-    for name in self.objects.keys():
-        for i in range(num_found):
-            # Skip found objects we have already used to avoid
-            # duplicate counting.
-            if used[i]:
-                continue
-
-            # Count the number of "close" observations.
-            count = 0
-            for t in range(num_times):
-                pos1 = self.objects[name][t]
-                pos2 = found_objects[i][t]
-                if pos1 is not None and pos2 is not None:
-                    if pos1.separation(pos2).arcsec <= threshold:
-                        count += 1
-
-            if count >= num_matches:
-                used[i] = True
-                match_count += 1
-    return match_count
+    return matches
