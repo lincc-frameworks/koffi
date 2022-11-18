@@ -5,7 +5,7 @@ from astropy.wcs import WCS
 class ImageMetadata:
     def __init__(self, file = None, mjd_key = 'MJD_OBS', mjd_val = None):
         self.obs_loc_set = False
-        self.epoch_set_ = False
+        self.epoch_set = False
         self.wcs = None
         self.center = None
         self.obs_code = ""
@@ -109,7 +109,7 @@ class ImageMetadata:
             epoch : astropy Time object.
         """
         self.epoch_ = epoch
-        self.epoch_set_ = True
+        self.epoch_set = True
 
     def get_epoch(self):
         """
@@ -118,11 +118,11 @@ class ImageMetadata:
         Returns:
             epoch : astropy Time object.
         """
-        if not self.epoch_set_:
+        if not self.epoch_set:
             raise ValueError('epoch (astropy.Time object) has not been set. do so with set_epoch()')
         return self.epoch_
 
-    def pixels_to_skycoords(self, pos):
+    def pixels_to_skycoords(self, x, y):
         """
         Transform the pixel position within an image
         to a SkyCoord.
@@ -135,7 +135,7 @@ class ImageMetadata:
         Returns:
             A SkyCoord with the transformed location.
         """
-        return self.wcs.pixel_to_world(pos.x, pos.y)
+        return self.wcs.pixel_to_world(x, y)
 
     def approximate_radius(self):
         """
