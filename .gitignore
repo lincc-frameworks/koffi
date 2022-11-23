@@ -6,5 +6,6 @@ tests/__pycache__/
 build/
 dist/
 .pytest_cache
+.coverage
 
 *.py[cod]

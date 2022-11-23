@@ -3,9 +3,9 @@ from astropy.io import fits
 from astropy.wcs import WCS
 
 class PotentialSource:
-    def __init__(self, times = None):
+    def __init__(self):
         self.position_at = {}
-        self.times = times
+        self.times = None
 
     def __getitem__(self, time):
         if time not in self.position_at.keys():

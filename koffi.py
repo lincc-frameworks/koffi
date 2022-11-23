@@ -171,10 +171,6 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
        time_step : integer
            The time step to use.
     """
-    # if time_step == -1:
-    #     time_step = self.max_time_step + 1
-    # self.set_timestamp(time_step, stats.get_epoch())
-
     query_string = create_jpl_query_string(image)
     if not query_string:
         raise ValueError("WARNING: Insufficient data in image_metadata.")
