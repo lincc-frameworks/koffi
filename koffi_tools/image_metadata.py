@@ -4,6 +4,13 @@ from astropy.wcs import WCS
 
 class ImageMetadata:
     def __init__(self, file = None, mjd_key = 'MJD_OBS', mjd_val = None):
+        """
+        Arguments:
+            file : a string containing a file path for a .fits file.
+            mjd_key (optional) : the HDU key for an MJD value, if the .fits 
+                file contains one already.
+            mjd_val (optional) : the double MJD value for the given .fits file.
+        """
         self.obs_loc_set = False
         self.epoch_set = False
         self.wcs = None
@@ -16,15 +23,19 @@ class ImageMetadata:
 
 
     def __getitem__(self, element):
+        """ return the header value for a given 'element' string. """
         return self.get_header_element(element)
 
     def populate_from_fits_file(self, filename, mjd_key = 'MJD_OBS', mjd_val = None):
         """
-        Read the file stats information from a FITS file.
+        Read the metadata from a given FITS file
 
         Arguments:
-            filename : string
-                The path and name of the FITS file.
+            filename : a string containing a file path for a .fits file.
+            mjd_key (optional) : the HDU key for an MJD value, if the .fits 
+                file contains one already.
+            mjd_val (optional) : the double MJD value for the given .fits file.
+
         """
         self.filename = filename
         with fits.open(filename) as hdu_list:
@@ -79,8 +90,7 @@ class ImageMetadata:
         Manually set the observatory code.
 
         Arguments:
-            obs_code : string
-               The Observatory code.
+            obs_code : a string containing the observatory code.
         """
         self.obs_code = obs_code
         self.obs_loc_set = True
@@ -128,10 +138,8 @@ class ImageMetadata:
         to a SkyCoord.
 
         Arguments:
-            pos : pixel_pos
-                A pixel_pos object containing the x and y
-                coordinates on the pixel.
-
+            x : an int containing the x coordinate to be transformed.
+            y : an int containing the y coordinate to be transformed.
         Returns:
             A SkyCoord with the transformed location.
         """
@@ -141,8 +149,6 @@ class ImageMetadata:
         """
         Compute an approximate radius of the image.
 
-        Arguments: NONE
-
         Returns:
             A radius in degrees.
         """
@@ -151,19 +157,38 @@ class ImageMetadata:
         return radius
 
     def ra_radius(self):
+        """
+        Compute the ra radius of the image.
+        
+        Returns:
+            A radius in degrees.
+        """
         edge = self.wcs.pixel_to_world(0.0, self.height / 2)
         radius = self.center.separation(edge)
         return radius
 
     def dec_radius(self):
+        """
+        Compute the dec radius of the image.
+        
+        Returns:
+            A radius in degrees.
+        """
         edge = self.wcs.pixel_to_world(self.width / 2, 0.0)
         radius = self.center.separation(edge)
         return radius
 
     def get_header_element(self, element):
-        # small wrapper element to grab a certain element from an
-        # hdu_list, since in the case where a FITS file has multiple
-        # hdus we can't be sure exactly which one it's in.
+        """
+        A small wrapper method to grab a certain element from an
+        hdu_list, since in the case where a FITS file has multiple
+        hdus we can't be sure exactly which one it's in.
+
+        Arguments:
+            element : a string containing the key to look for in the hdu_list.
+        Returns:
+            the requested element, or None if it can't be found.
+        """
         for hdu in self.hdu_list:
             if element in hdu.header:
                 return hdu.header[element]
@@ -171,6 +196,11 @@ class ImageMetadata:
 
 class ImageMetadataStack:
     def __init__(self, files=None):
+        """
+        Arguments:
+            filenames : a list of strings containing a file path for a
+                .fits file.
+        """
         self.image_metadatas = []
         if files is not None:
             self.build_from_filenames(files)
@@ -182,6 +212,13 @@ class ImageMetadataStack:
         return len(self.image_metadatas)
 
     def build_from_filenames(self, filenames):
+        """
+        Builds the ImageMetadataStack from a list of filenames.
+
+        Arguments:
+            filenames : a list of strings containing a file path for a
+                .fits file.
+        """
         self.image_metadatas = []
         for f in filenames:
             img = ImageMetadata()

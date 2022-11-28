@@ -1,4 +1,11 @@
 """
+koffi - Known Objects From Fits Indices
+A tool that provides a unified interface to query SkyBoT and JPL's Horizons
+APIs using metadata pulled from FITS files and user provided sources.
+Developed by Max West (https://github.com/maxwest-uw) as part of work for
+the LINCC Frameworks team at the University of Washington.
+Based on code written by Jeremy Kubica (https://github.com/jeremykubica) for
+the KBMOD package (https://github.com/dirac-institute/kbmod).
 Matching is approximate and results might not be comprehensive.
 All scientific studies should conduct their own matching analysis.
 
@@ -28,18 +35,24 @@ from tqdm import tqdm
 def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
-    given meta data from a FITS file in the form of a
-    ImageInfo and adds them to the known objects list.
+    given meta data from a FITS file in the form of an
+    ImageMetadata and checks them against a list of PotentialSources
+    using the IMCCE's SkyBoT VO tool.
 
     Arguments:
         potential_sources : List of PotentialSource objects
         image : ImageMetadata object
            The metadata for the current image.
         tolerance : the allowed separation between objects in arcseconds
+    Returns:
+        matches : a matrix of matches, where row[0] is the index of the
+            potential source, row[1] a list with the object name and a SkyCoord 
+            denoting the location of the given object.
     """
 
     # Use SkyBoT to look up the known objects with a conesearch.
-    # The function returns a QTable.
+    # The function returns a list of objects attached to an index of
+    # the potential_sources list.
     results_table = Skybot.cone_search(image.center, image.approximate_radius(), image.get_epoch())
 
     matches = []
@@ -63,7 +76,8 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
 def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations = 1):
     """
     Finds all known objects that should appear in a series of
-    images given the meta data from the corresponding FITS files.
+    images given the meta data from the corresponding FITS files
+    using the IMCCE's SkyBoT VO tool.
 
     Arguments:
         potential_sources : List of PotentialSource objects
@@ -71,6 +85,10 @@ def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, m
         tolerance : the allowed separation between objects in arcseconds
         min_obeservations : minimum number of times a source has to be found throughout
             the frames to be returned in the results.
+    Returns:
+        matches : dictionary using the potential source id as a key that
+            contains another dict of found objects with a corresponding count
+            of observations (object name is the key).
     """
     matches = {}
     for i in range(len(potential_sources)):
@@ -162,14 +180,19 @@ def create_jpl_query_string(image):
 def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
-    given meta data from a FITS file in the form of a
-    ImageInfo and adds them to the known objects list.
+    given meta data from a FITS file in the form of an
+    ImageMetadata and checks them against a list of PotentialSources
+    using NASA JPL’s SSD (Solar System Dynamics) API service.
 
     Arguments:
-       image : ImageMetadata object
+        potential_sources : List of PotentialSource objects
+        image : ImageMetadata object
            The metadata for the current image.
-       time_step : integer
-           The time step to use.
+        tolerance : the allowed separation between objects in arcseconds
+    Returns:
+        matches : a matrix of matches, where row[0] is the index of the
+            potential source, row[1] a list with the object name and a SkyCoord 
+            denoting the location of the given object.
     """
     query_string = create_jpl_query_string(image)
     if not query_string:
@@ -206,11 +229,19 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
 def jpl_query_known_objects_stack(potential_sources, images, tolerance = 0.5, min_observations = 1):
     """
     Finds all known objects that should appear in a series of
-    images given the meta data from the corresponding FITS files.
+    images given the meta data from the corresponding FITS files
+    using NASA JPL’s SSD (Solar System Dynamics) API service.
 
     Arguments:
-        all_stats - An ImageInfoSet object holding the
-                    for the current set of images.
+        potential_sources : List of PotentialSource objects
+        images : an ImageMetadataSet holding the metadata for a stack of images.
+        tolerance : the allowed separation between objects in arcseconds
+        min_obeservations : minimum number of times a source has to be found throughout
+            the frames to be returned in the results.
+    Returns:
+        matches : dictionary using the potential source id as a key that
+            contains another dict of found objects with a corresponding count
+            of observations (object name is the key).
     """
     matches = {}
     for i in range(len(potential_sources)):

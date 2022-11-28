@@ -8,11 +8,21 @@ class PotentialSource:
         self.times = None
 
     def __getitem__(self, time):
+        """ given an MJD value return the [ra, dec] position """
         if time not in self.position_at.keys():
             raise ValueError('no location associated with provided time')
         return self.position_at[time]
 
     def build_from_times_and_known_positions(self, positions, times):
+        """
+        Build out the position_at dict using times and positions.
+
+        Arguments:
+            positions : a list containing lists of [ra, dec] positions.
+            times : a list of doubles containing MJD times of given positions.
+                NOTE: to avoid headaches, use the MJDs given from the
+                ImageMetadata epoch.
+        """
         if len(positions) != len(times):
             raise ValueError('number of positions does not match number of times provided')
 

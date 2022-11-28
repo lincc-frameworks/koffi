@@ -52,9 +52,6 @@ class TestKoffiSearch(unittest.TestCase):
     def test_skybot_query_known_objects(self, mock_cone_search):
         mock_cone_search.return_value = self.mock_skybot_results
 
-        # source = PotentialSource()
-        # source.build_from_times_and_known_positions([[240334, -10.78208]], [59806.25])
-
         with tempfile.TemporaryDirectory() as dir_name:
             fname = "%s/tmp.fits" % dir_name
             create_fake_fits_file(fname, 20, 30)
