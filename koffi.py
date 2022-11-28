@@ -32,6 +32,32 @@ from koffi_tools.potential_source import *
 
 from tqdm import tqdm
 
+def skybot_search_frame(image):
+    """
+    Gets all known objects within the frame of a single FITS image from SkyBoT.
+
+    Arguments:
+        image : an ImageMetadata object.
+    Returns:
+        A list of objects, where each object row is in 
+            the form [Name, SkyCoord].
+    """
+    image_center = image.center
+    image_radius = image.approximate_radius()
+    image_epoch = image.get_epoch()
+
+    skybot_results = Skybot.cone_search(image_center, image_radius, image_epoch)
+
+    objects = []
+    for row in range(len(skybot_results)):
+        name = skybot_results["Name"][row]
+        ra = skybot_results["RA"][row]
+        dec = skybot_results["DEC"][row]
+        row_coord = SkyCoord(ra, dec, unit = "deg")
+        objects.append([name, row_coord])
+
+    return objects
+
 def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
@@ -53,20 +79,16 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     # Use SkyBoT to look up the known objects with a conesearch.
     # The function returns a list of objects attached to an index of
     # the potential_sources list.
-    results_table = Skybot.cone_search(image.center, image.approximate_radius(), image.get_epoch())
-
+    skybot_frame_objects = skybot_search_frame(image)
     matches = []
 
     for i in range(len(potential_sources)):
         ps = potential_sources[i]
         time = image.get_epoch().mjd
         ps_coord = SkyCoord(ps[time][0], ps[time][1], unit='deg')
-        num_results = len(results_table["Name"])
-        for row in range(num_results):
-            name = results_table["Name"][row]
-            ra = results_table["RA"][row]
-            dec = results_table["DEC"][row]
-            row_coord = SkyCoord(ra, dec, unit='deg')
+        for row in skybot_frame_objects:
+            name = row[0]
+            row_coord = row[1]
             sep = ps_coord.separation(row_coord)
             if sep.arcsecond < tolerance:
                 matches.append([i, [name, row_coord]])
@@ -177,6 +199,37 @@ def create_jpl_query_string(image):
 
     return query
 
+def jpl_search_frame(image):
+    """
+    Gets all known objects within the frame of a single FITS image from
+        JPL Horizons API.
+
+    Arguments:
+        image : an ImageMetadata object.
+    Returns:
+        A list of objects, where each object row is in 
+            the form [Name, SkyCoord].
+    """
+    query_string = create_jpl_query_string(image)
+    if not query_string:
+        raise ValueError("WARNING: Insufficient data in image_metadata.")
+
+    objects = []
+
+    with libreq.urlopen(query_string) as url:
+        feed = url.read().decode("utf-8")
+        results = json.loads(feed)
+
+        num_results = results["n_second_pass"]
+        for item in results["data_second_pass"]:
+            name = item[0]
+            ra_str = item[1]
+            dec_str = item[2].replace("'", " ").replace('"', "")
+            sc = SkyCoord(ra_str, dec_str, unit=(u.hourangle, u.deg))
+            objects.append([name, sc])
+
+    return objects
+
 def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
@@ -198,19 +251,7 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     if not query_string:
         raise ValueError("WARNING: Insufficient data in image_metadata.")
 
-    observations = []
-
-    with libreq.urlopen(query_string) as url:
-        feed = url.read().decode("utf-8")
-        results = json.loads(feed)
-
-        num_results = results["n_second_pass"]
-        for item in results["data_second_pass"]:
-            name = item[0]
-            ra_str = item[1]
-            dec_str = item[2].replace("'", " ").replace('"', "")
-            sc = SkyCoord(ra_str, dec_str, unit=(u.hourangle, u.deg))
-            observations.append([name, sc])
+    observations = jpl_search_frame(image)
 
     matches = []
     for i in range(len(potential_sources)):
@@ -223,7 +264,7 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
             row_coord = observations[row][1]
             sep = ps_coord.separation(row_coord)
             if sep.arcsecond < tolerance:
-                matches.append([i, [name, sc]])
+                matches.append([i, [name, row_coord]])
     return matches
 
 def jpl_query_known_objects_stack(potential_sources, images, tolerance = 0.5, min_observations = 1):
