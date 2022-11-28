@@ -126,5 +126,24 @@ class TestImageMetadataStack(unittest.TestCase):
             self.assertEqual(images[1]["NAXIS2"], 30)
             self.assertEqual(len(images), 2)
 
+    def test_get_mjds(self):
+        with tempfile.TemporaryDirectory() as dir_name:
+            # Create two fake files in the temporary directory.
+            fname1 = "%s/tmp1.fits" % dir_name
+            fname2 = "%s/tmp2.fits" % dir_name
+            create_fake_fits_file(fname1, 10, 20)
+            create_fake_fits_file(fname2, 20, 30)
+            images = ImageMetadataStack()
+            images.build_from_filenames([fname1, fname2])
+
+            images[1].set_epoch(Time(59806.30, format='mjd'))
+            
+            mjds = images.get_mjds()
+            self.assertEqual(len(mjds), 2)
+            self.assertEqual(mjds[0], 59806.25)
+            self.assertEqual(mjds[1], 59806.30)
+
+
+
 if __name__ == '__main__':
     unittest.main()

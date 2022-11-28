@@ -202,8 +202,10 @@ class ImageMetadataStack:
                 .fits file.
         """
         self.image_metadatas = []
+        self.mjds = []
         if files is not None:
             self.build_from_filenames(files)
+            self.get_mjds()
 
     def __getitem__(self, index):
         return self.image_metadatas[index]
@@ -224,4 +226,18 @@ class ImageMetadataStack:
             img = ImageMetadata()
             img.populate_from_fits_file(f)
             self.image_metadatas.append(img)
+
+    def get_mjds(self):
+        """
+        Get the list of mjd values of the stack (and set it if it hasn't been).
+
+        Returns:
+            a list of doubles containing the MJD value for each image in the
+                image stack.
+        """
+        if len(self.mjds) == 0 and len(self) > 0:
+            for image in self.image_metadatas:
+                self.mjds.append(image.get_epoch().mjd)
+        return self.mjds
+
 
