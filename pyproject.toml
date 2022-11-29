@@ -5,6 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "KOFFI"
 description = "Known Objects From FITS Indices"
+version = "0.1.0"
+authors = [
+    {name = "Max West", email = "maxwest@uw.edu"}
+]
 requires-python = ">=3.7"
 dependencies = [
     "astropy",
@@ -13,7 +17,6 @@ dependencies = [
     "tqdm"
 ]
 license = {text = "BSD 3-Clause License"}
-dynamic = ["version"]
 
 # formatting configuration as specified at developer.lsst.io
 [tool.black]

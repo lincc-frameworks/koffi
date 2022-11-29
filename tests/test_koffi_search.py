@@ -139,7 +139,7 @@ class TestKoffiSearch(unittest.TestCase):
                 create_fake_fits_file(fname, 20, 30)
                 image = ImageMetadata(fname)
 
-                results = jpl_query_known_objects([self.source_jpl], image)
+                results = jpl_query_known_objects([self.source_jpl], image, tolerance=0.5)
                 self.assertEqual(results[0][0], 0)
                 self.assertEqual(results[0][1][0], "(2013 FD28)")
                 self.assertEqual(results[0][1][1].ra.arcsecond, 721805.55)
@@ -155,7 +155,7 @@ class TestKoffiSearch(unittest.TestCase):
                 images = ImageMetadataStack([fname1, fname2])
                 images[1].set_epoch(Time(59806.30, format="mjd"))
 
-                results = jpl_query_known_objects_stack([self.source_jpl_mult], images)
+                results = jpl_query_known_objects_stack([self.source_jpl_mult], images, tolerance=0.5)
                 self.assertEqual(len(results), 1)
                 self.assertEqual(results[0]["(2013 FD28)"], 2)
 

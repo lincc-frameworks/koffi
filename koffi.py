@@ -58,7 +58,7 @@ def skybot_search_frame(image):
     return objects
 
 
-def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
+def skybot_query_known_objects(potential_sources, image, tolerance=0.1):
     """
     Finds all known objects that should appear in an image
     given meta data from a FITS file in the form of an
@@ -96,7 +96,7 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     return matches
 
 
-def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations=1):
+def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.1, min_observations=1):
     """
     Finds all known objects that should appear in a series of
     images given the meta data from the corresponding FITS files
@@ -234,7 +234,7 @@ def jpl_search_frame(image):
     return objects
 
 
-def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
+def jpl_query_known_objects(potential_sources, image, tolerance=0.1):
     """
     Finds all known objects that should appear in an image
     given meta data from a FITS file in the form of an
@@ -272,7 +272,7 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     return matches
 
 
-def jpl_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations=1):
+def jpl_query_known_objects_stack(potential_sources, images, tolerance=0.1, min_observations=1):
     """
     Finds all known objects that should appear in a series of
     images given the meta data from the corresponding FITS files
