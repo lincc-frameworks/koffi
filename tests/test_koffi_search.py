@@ -1,19 +1,19 @@
-from astropy.table import QTable
-import unittest
-from unittest import mock
+import io
+import json
 import tempfile
+import unittest
+import urllib.request as libreq
+from unittest import mock
 
 from astropy.coordinates import Angle, SkyCoord
 from astropy.io import fits
+from astropy.table import QTable
 from astropy.time import Time
 from astropy.wcs import WCS
 
 from koffi import *
-from .koffi_test_helpers import *
 
-import io
-import json
-import urllib.request as libreq
+from .koffi_test_helpers import *
 
 
 class TestKoffiSearch(unittest.TestCase):
@@ -40,15 +40,10 @@ class TestKoffiSearch(unittest.TestCase):
 
         self.source_jpl_mult = PotentialSource()
         self.source_jpl_mult.build_from_times_and_known_positions(
-            [
-                [200.501562, -14.166247],
-                [200.501562, -14.166247]
-            ], 
-            [59806.25, 59806.30]
+            [[200.501562, -14.166247], [200.501562, -14.166247]], [59806.25, 59806.30]
         )
 
-
-    @mock.patch('astroquery.imcce.Skybot.cone_search')
+    @mock.patch("astroquery.imcce.Skybot.cone_search")
     def test_skybot_query_known_objects(self, mock_cone_search):
         mock_cone_search.return_value = self.mock_skybot_results
 
@@ -62,9 +57,9 @@ class TestKoffiSearch(unittest.TestCase):
             self.assertEqual(results[0][0], 0)
             self.assertEqual(results[0][1][0], "2003 OH28")
             self.assertEqual(results[0][1][1].ra.arcsecond, 770400.0)
-            self.assertEqual(results[0][1][1].dec.arcsecond, -38815.488000000005)    
+            self.assertEqual(results[0][1][1].dec.arcsecond, -38815.488000000005)
 
-    @mock.patch('astroquery.imcce.Skybot.cone_search')
+    @mock.patch("astroquery.imcce.Skybot.cone_search")
     def test_skybot_query_no_sources(self, mock_cone_search):
         mock_cone_search.return_value = self.mock_skybot_results
 
@@ -75,9 +70,9 @@ class TestKoffiSearch(unittest.TestCase):
             results = skybot_query_known_objects([], metadata)
 
             # mock_cone_search.assert_called()
-            self.assertEqual(results, [])    
+            self.assertEqual(results, [])
 
-    @mock.patch('astroquery.imcce.Skybot.cone_search')
+    @mock.patch("astroquery.imcce.Skybot.cone_search")
     def test_skybot_query_known_objects_stack(self, mock_cone_search):
         mock_cone_search.return_value = self.mock_skybot_results
 
@@ -88,15 +83,15 @@ class TestKoffiSearch(unittest.TestCase):
             create_fake_fits_file(fname2, 20, 30)
 
             images = ImageMetadataStack([fname1, fname2])
-            images[1].set_epoch(Time(59806.30, format='mjd'))
+            images[1].set_epoch(Time(59806.30, format="mjd"))
 
             source = PotentialSource()
             source.build_from_times_and_known_positions(
                 [
                     [240334, -10.78208],
                     [240334, -10.78208],
-                ], 
-                [59806.25, 59806.30]
+                ],
+                [59806.25, 59806.30],
             )
 
             results = skybot_query_known_objects_stack([source], images)
@@ -104,9 +99,9 @@ class TestKoffiSearch(unittest.TestCase):
             # mock_cone_search.assert_called()
             self.assertEqual(mock_cone_search.call_count, 2)
             self.assertEqual(len(results), 1)
-            self.assertEqual(results[0]['2003 OH28'], 2)    
+            self.assertEqual(results[0]["2003 OH28"], 2)
 
-    @mock.patch('astroquery.imcce.Skybot.cone_search')
+    @mock.patch("astroquery.imcce.Skybot.cone_search")
     def test_skybot_query_stack_no_source(self, mock_cone_search):
         mock_cone_search.return_value = self.mock_skybot_results
 
@@ -117,7 +112,7 @@ class TestKoffiSearch(unittest.TestCase):
             create_fake_fits_file(fname2, 20, 30)
 
             images = ImageMetadataStack([fname1, fname2])
-            images[1].set_epoch(Time(59806.30, format='mjd'))
+            images[1].set_epoch(Time(59806.30, format="mjd"))
 
             results = skybot_query_known_objects_stack([], images)
 
@@ -138,7 +133,7 @@ class TestKoffiSearch(unittest.TestCase):
             self.assertRegex(jpl_query_string, regex_fov)
 
     def test_jpl_query_known_objects(self):
-        with mock.patch.object(libreq, 'urlopen', return_value=self.jpl_data):
+        with mock.patch.object(libreq, "urlopen", return_value=self.jpl_data):
             with tempfile.TemporaryDirectory() as dir_name:
                 fname = "%s/tmp.fits" % dir_name
                 create_fake_fits_file(fname, 20, 30)
@@ -148,23 +143,23 @@ class TestKoffiSearch(unittest.TestCase):
                 self.assertEqual(results[0][0], 0)
                 self.assertEqual(results[0][1][0], "(2013 FD28)")
                 self.assertEqual(results[0][1][1].ra.arcsecond, 721805.55)
-                self.assertEqual(results[0][1][1].dec.arcsecond, -50998.3)    
+                self.assertEqual(results[0][1][1].dec.arcsecond, -50998.3)
 
     def test_jpl_query_known_objects_stack(self):
-        with mock.patch.object(libreq, 'urlopen', side_effect=[self.jpl_data, self.jpl_data_second]):
+        with mock.patch.object(libreq, "urlopen", side_effect=[self.jpl_data, self.jpl_data_second]):
             with tempfile.TemporaryDirectory() as dir_name:
                 fname1 = "%s/tmp1.fits" % dir_name
                 fname2 = "%s/tmp2.fits" % dir_name
                 create_fake_fits_file(fname1, 20, 30)
                 create_fake_fits_file(fname2, 20, 30)
                 images = ImageMetadataStack([fname1, fname2])
-                images[1].set_epoch(Time(59806.30, format='mjd'))
+                images[1].set_epoch(Time(59806.30, format="mjd"))
 
                 results = jpl_query_known_objects_stack([self.source_jpl_mult], images)
                 self.assertEqual(len(results), 1)
                 self.assertEqual(results[0]["(2013 FD28)"], 2)
 
-    @mock.patch('astroquery.imcce.Skybot.cone_search')
+    @mock.patch("astroquery.imcce.Skybot.cone_search")
     def test_skybot_search_frame(self, mock_cone_search):
         mock_cone_search.return_value = self.mock_skybot_results
 
@@ -180,7 +175,7 @@ class TestKoffiSearch(unittest.TestCase):
             self.assertEqual(results[0][1].dec.arcsecond, -38815.488000000005)
 
     def test_jpl_query_search_frame(self):
-        with mock.patch.object(libreq, 'urlopen', return_value=self.jpl_data):
+        with mock.patch.object(libreq, "urlopen", return_value=self.jpl_data):
             with tempfile.TemporaryDirectory() as dir_name:
                 fname = "%s/tmp.fits" % dir_name
                 create_fake_fits_file(fname, 20, 30)
@@ -190,11 +185,4 @@ class TestKoffiSearch(unittest.TestCase):
                 self.assertTrue(results is not None)
                 self.assertEqual(results[0][0], "(2013 FD28)")
                 self.assertEqual(results[0][1].ra.arcsecond, 721805.55)
-                self.assertEqual(results[0][1].dec.arcsecond, -50998.3) 
-
-
-        
-
-
-
-
+                self.assertEqual(results[0][1].dec.arcsecond, -50998.3)

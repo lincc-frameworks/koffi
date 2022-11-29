@@ -4,6 +4,7 @@ from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
 
+
 def create_fake_fits_file(fname, x_dim, y_dim):
     # Create a primary HDU with just the date/time
     # and observatory info in the header.

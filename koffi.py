@@ -18,19 +18,18 @@ import urllib.request as libreq
 
 import astropy.units as u
 from astropy.coordinates import Angle, SkyCoord
-from astropy.time import Time
 from astropy.io import fits
+from astropy.time import Time
 from astropy.wcs import WCS
-
 from astroquery.imcce import Skybot
 from astroquery.jplhorizons import Horizons
+from tqdm import tqdm
 
 # Import the data_tools packages directly in koffi so that they are
 # accesible at the top level of the package.
 from koffi_tools.image_metadata import *
 from koffi_tools.potential_source import *
 
-from tqdm import tqdm
 
 def skybot_search_frame(image):
     """
@@ -39,7 +38,7 @@ def skybot_search_frame(image):
     Arguments:
         image : an ImageMetadata object.
     Returns:
-        A list of objects, where each object row is in 
+        A list of objects, where each object row is in
             the form [Name, SkyCoord].
     """
     image_center = image.center
@@ -53,10 +52,11 @@ def skybot_search_frame(image):
         name = skybot_results["Name"][row]
         ra = skybot_results["RA"][row]
         dec = skybot_results["DEC"][row]
-        row_coord = SkyCoord(ra, dec, unit = "deg")
+        row_coord = SkyCoord(ra, dec, unit="deg")
         objects.append([name, row_coord])
 
     return objects
+
 
 def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     """
@@ -72,7 +72,7 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
         tolerance : the allowed separation between objects in arcseconds
     Returns:
         matches : a matrix of matches, where row[0] is the index of the
-            potential source, row[1] a list with the object name and a SkyCoord 
+            potential source, row[1] a list with the object name and a SkyCoord
             denoting the location of the given object.
     """
 
@@ -85,7 +85,7 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
     for i in range(len(potential_sources)):
         ps = potential_sources[i]
         time = image.get_epoch().mjd
-        ps_coord = SkyCoord(ps[time][0], ps[time][1], unit='deg')
+        ps_coord = SkyCoord(ps[time][0], ps[time][1], unit="deg")
         for row in skybot_frame_objects:
             name = row[0]
             row_coord = row[1]
@@ -95,7 +95,8 @@ def skybot_query_known_objects(potential_sources, image, tolerance=0.5):
 
     return matches
 
-def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations = 1):
+
+def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations=1):
     """
     Finds all known objects that should appear in a series of
     images given the meta data from the corresponding FITS files
@@ -135,6 +136,7 @@ def skybot_query_known_objects_stack(potential_sources, images, tolerance=0.5, m
             matches[ps_id].pop(rem)
 
     return matches
+
 
 def create_jpl_query_string(image):
     """
@@ -199,6 +201,7 @@ def create_jpl_query_string(image):
 
     return query
 
+
 def jpl_search_frame(image):
     """
     Gets all known objects within the frame of a single FITS image from
@@ -207,7 +210,7 @@ def jpl_search_frame(image):
     Arguments:
         image : an ImageMetadata object.
     Returns:
-        A list of objects, where each object row is in 
+        A list of objects, where each object row is in
             the form [Name, SkyCoord].
     """
     query_string = create_jpl_query_string(image)
@@ -230,6 +233,7 @@ def jpl_search_frame(image):
 
     return objects
 
+
 def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     """
     Finds all known objects that should appear in an image
@@ -244,7 +248,7 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
         tolerance : the allowed separation between objects in arcseconds
     Returns:
         matches : a matrix of matches, where row[0] is the index of the
-            potential source, row[1] a list with the object name and a SkyCoord 
+            potential source, row[1] a list with the object name and a SkyCoord
             denoting the location of the given object.
     """
     query_string = create_jpl_query_string(image)
@@ -257,7 +261,7 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
     for i in range(len(potential_sources)):
         ps = potential_sources[i]
         time = image.get_epoch().mjd
-        ps_coord = SkyCoord(ps[time][0], ps[time][1], unit='deg')
+        ps_coord = SkyCoord(ps[time][0], ps[time][1], unit="deg")
         num_results = len(observations)
         for row in range(num_results):
             name = observations[row][0]
@@ -267,7 +271,8 @@ def jpl_query_known_objects(potential_sources, image, tolerance=0.5):
                 matches.append([i, [name, row_coord]])
     return matches
 
-def jpl_query_known_objects_stack(potential_sources, images, tolerance = 0.5, min_observations = 1):
+
+def jpl_query_known_objects_stack(potential_sources, images, tolerance=0.5, min_observations=1):
     """
     Finds all known objects that should appear in a series of
     images given the meta data from the corresponding FITS files
@@ -288,7 +293,7 @@ def jpl_query_known_objects_stack(potential_sources, images, tolerance = 0.5, mi
     for i in range(len(potential_sources)):
         matches[i] = {}
 
-    print('NOTE: JPL Horizons queries are rate limited and can take up to 5 minutes per query to complete.')
+    print("NOTE: JPL Horizons queries are rate limited and can take up to 5 minutes per query to complete.")
 
     for image in tqdm(images):
         frame_sources = jpl_query_known_objects(potential_sources, image, tolerance)

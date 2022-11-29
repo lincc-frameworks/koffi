@@ -1,13 +1,14 @@
-from astropy.time import Time
 from astropy.io import fits
+from astropy.time import Time
 from astropy.wcs import WCS
 
+
 class ImageMetadata:
-    def __init__(self, file = None, mjd_key = 'MJD_OBS', mjd_val = None):
+    def __init__(self, file=None, mjd_key="MJD_OBS", mjd_val=None):
         """
         Arguments:
             file : a string containing a file path for a .fits file.
-            mjd_key (optional) : the HDU key for an MJD value, if the .fits 
+            mjd_key (optional) : the HDU key for an MJD value, if the .fits
                 file contains one already.
             mjd_val (optional) : the double MJD value for the given .fits file.
         """
@@ -21,18 +22,17 @@ class ImageMetadata:
         if file is not None:
             self.populate_from_fits_file(file, mjd_key, mjd_val)
 
-
     def __getitem__(self, element):
-        """ return the header value for a given 'element' string. """
+        """return the header value for a given 'element' string."""
         return self.get_header_element(element)
 
-    def populate_from_fits_file(self, filename, mjd_key = 'MJD_OBS', mjd_val = None):
+    def populate_from_fits_file(self, filename, mjd_key="MJD_OBS", mjd_val=None):
         """
         Read the metadata from a given FITS file
 
         Arguments:
             filename : a string containing a file path for a .fits file.
-            mjd_key (optional) : the HDU key for an MJD value, if the .fits 
+            mjd_key (optional) : the HDU key for an MJD value, if the .fits
                 file contains one already.
             mjd_val (optional) : the double MJD value for the given .fits file.
 
@@ -129,7 +129,7 @@ class ImageMetadata:
             epoch : astropy Time object.
         """
         if not self.epoch_set:
-            raise ValueError('epoch (astropy.Time object) has not been set. do so with set_epoch()')
+            raise ValueError("epoch (astropy.Time object) has not been set. do so with set_epoch()")
         return self.epoch_
 
     def pixels_to_skycoords(self, x, y):
@@ -159,7 +159,7 @@ class ImageMetadata:
     def ra_radius(self):
         """
         Compute the ra radius of the image.
-        
+
         Returns:
             A radius in degrees.
         """
@@ -170,7 +170,7 @@ class ImageMetadata:
     def dec_radius(self):
         """
         Compute the dec radius of the image.
-        
+
         Returns:
             A radius in degrees.
         """
@@ -193,6 +193,7 @@ class ImageMetadata:
             if element in hdu.header:
                 return hdu.header[element]
         return None
+
 
 class ImageMetadataStack:
     def __init__(self, files=None):
@@ -239,5 +240,3 @@ class ImageMetadataStack:
             for image in self.image_metadatas:
                 self.mjds.append(image.get_epoch().mjd)
         return self.mjds
-
-

@@ -1,6 +1,7 @@
-from astropy.time import Time
 from astropy.io import fits
+from astropy.time import Time
 from astropy.wcs import WCS
+
 
 class PotentialSource:
     def __init__(self):
@@ -8,9 +9,9 @@ class PotentialSource:
         self.times = None
 
     def __getitem__(self, time):
-        """ given an MJD value return the [ra, dec] position """
+        """given an MJD value return the [ra, dec] position"""
         if time not in self.position_at.keys():
-            raise ValueError('no location associated with provided time')
+            raise ValueError("no location associated with provided time")
         return self.position_at[time]
 
     def build_from_times_and_known_positions(self, positions, times):
@@ -25,7 +26,7 @@ class PotentialSource:
                 an ImageMetadataStack using .get_mjds().
         """
         if len(positions) != len(times):
-            raise ValueError('number of positions does not match number of times provided')
+            raise ValueError("number of positions does not match number of times provided")
 
         for i in range(len(times)):
             self.position_at[times[i]] = positions[i]
@@ -40,11 +41,10 @@ class PotentialSource:
             images : an ImageMetadataStack.
         """
         if len(positions) != len(images):
-            raise ValueError('number of positions does not match number of images provided')
+            raise ValueError("number of positions does not match number of images provided")
 
         mjds = images.get_mjds()
         for i in range(len(mjds)):
             x, y = positions[i]
             position = images[i].pixels_to_skycoords(x, y)
             self.position_at[mjds[i]] = [position.ra.degree, position.dec.degree]
-        
