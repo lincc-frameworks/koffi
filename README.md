@@ -1,7 +1,7 @@
 # koffi
 Known Objects From Fits Indices
 
-A package that should hopefully be helpful to people working with stack-and-shift alogorithms and other solar system science use cases. Given an input of possible solar system objects (PotentialSources) relating either to an x and y coordinate of a FITS image or a ra dec coordinate with a timestamp, we provide an easy API for converting x and y coordinates into ra and dec and querying the most well known solar system dynamics api services. Uses the IMCCE's SkyBoT VO tool (Berthier et. al. 2006) and JPL’s SSD (Solar System Dynamics) [API service](https://ssd.jpl.nasa.gov/).
+A package that should hopefully be helpful to people working with shift-and-stack algorithms and other solar system science use cases. Given an input of possible solar system objects (PotentialSources) relating either to an x and y coordinate of a FITS image or an RA and Dec coordinate with a timestamp, we provide an easy API for converting x and y coordinates into RA and Dec and querying the most well known solar system dynamics api services. Uses the IMCCE's SkyBoT VO tool (Berthier et. al. 2006) and JPL’s SSD (Solar System Dynamics) [API service](https://ssd.jpl.nasa.gov/).
 
 This package is based off of code developed by Jeremy Kubica for the [KBMOD](https://github.com/dirac-institute/kbmod) package.
 
