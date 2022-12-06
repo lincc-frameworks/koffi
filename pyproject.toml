@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "KOFFI"
 description = "Known Objects From FITS Indices"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     {name = "Max West", email = "maxwest@uw.edu"}
 ]
