@@ -32,7 +32,7 @@ image = koffi.ImageMetadata(filename)
 skybot_objects = koffi.skybot_search_frame(image)
 
 # JPL Horizons = get all possible objects in given image.
-jpl_objects = koffi.jpl.search_frame(image)
+jpl_objects = koffi.jpl_search_frame(image)
 ```
 
 We can also use koffi to check against a list of provided sources; the search functions will return a list of matches.
