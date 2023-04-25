@@ -30,7 +30,6 @@ from tqdm import tqdm
 from koffi_tools.image_metadata import *
 from koffi_tools.potential_source import *
 
-
 def skybot_search_frame(image):
     """
     Gets all known objects within the frame of a single FITS image from SkyBoT.
@@ -162,7 +161,7 @@ def create_jpl_query_string(image):
 
     # Create a string of data for the observatory.
     if image.obs_code:
-        obs_str = "mpc-code=%s" % self.obs_code
+        obs_str = "mpc-code=%s" % image.obs_code
     else:
         obs_str = "lat=%f&lon=%f&alt=%f" % (image.obs_lat, image.obs_long, image.obs_alt)
 
@@ -189,7 +188,7 @@ def create_jpl_query_string(image):
         dec_str = "fov-dec-lim=M%02i-%02i-%05.2f" % (-dec_dms_L[0], -dec_dms_L[1], -dec_dms_L[2])
     dec_dms_H = Angle(image.center.dec + image.dec_radius()).dms
     if dec_dms_H[0] >= 0:
-        dec_str = "%s,02i-%02i-%05.2f" % (dec_str, dec_dms_H[0], dec_dms_H[1], dec_dms_H[2])
+        dec_str = "%s,%02i-%02i-%05.2f" % (dec_str, dec_dms_H[0], dec_dms_H[1], dec_dms_H[2])
     else:
         dec_str = "%s,M%02i-%02i-%05.2f" % (dec_str, -dec_dms_H[0], -dec_dms_H[1], -dec_dms_H[2])
 
@@ -222,6 +221,9 @@ def jpl_search_frame(image):
     with libreq.urlopen(query_string) as url:
         feed = url.read().decode("utf-8")
         results = json.loads(feed)
+
+        if 'warning' in results.keys() and results['warning'] == "no matching records":
+            return []
 
         num_results = results["n_second_pass"]
         for item in results["data_second_pass"]:
