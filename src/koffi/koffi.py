@@ -30,6 +30,7 @@ from tqdm import tqdm
 from koffi_tools.image_metadata import *
 from koffi_tools.potential_source import *
 
+
 def skybot_search_frame(image):
     """
     Gets all known objects within the frame of a single FITS image from SkyBoT.
@@ -222,7 +223,7 @@ def jpl_search_frame(image):
         feed = url.read().decode("utf-8")
         results = json.loads(feed)
 
-        if 'warning' in results.keys() and results['warning'] == "no matching records":
+        if "warning" in results.keys() and results["warning"] == "no matching records":
             return []
 
         num_results = results["n_second_pass"]
