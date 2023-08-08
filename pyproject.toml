@@ -16,6 +16,10 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "ipykernel", # Support for Jupyter notebooks
+    "astropy",
+    "astroquery",
+    "dask",
+    "tqdm"
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)
@@ -58,3 +62,4 @@ line-length = 110
 
 [tool.isort]
 profile = "black"
+line_length = 110
