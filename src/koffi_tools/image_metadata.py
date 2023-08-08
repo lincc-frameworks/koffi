@@ -1,6 +1,7 @@
 from astropy.io import fits
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from astropy.wcs import WCS
+from astroquery.mpc import MPC
 
 
 class ImageMetadata:
@@ -57,6 +58,8 @@ class ImageMetadata:
                 # Patch for DECam data
                 if "DATE-AVG" in hdu_list[0].header:
                     self.set_epoch(Time(hdu_list[0].header["DATE-AVG"], format="isot"))
+                elif "DATE-OBS" in hdu_list[0].header and "EXPTIME" in hdu_list[0].header:
+                    self.set_epoch(Time(hdu_list[0].header["DATE-OBS"], format="isot") + TimeDelta(hdu_list[0].header["EXPTIME"], format="sec")/2)
                 elif self.get_header_element(mjd_key) is not None:
                     self.set_epoch(Time(self.get_header_element(mjd_key), format="mjd"))
 
@@ -64,9 +67,10 @@ class ImageMetadata:
             # Since this doesn't seem to be standardized, we try some
             # documented versions.
             observat = self.get_header_element("OBSERVAT")
+            observatories = MPC.get_observatory_codes() # get list of MPC-defined observatory codes
             obs_lat = self.get_header_element("OBS-LAT")
-            lat_obs = self.get_header_element("LAT_OBS")
-            if observat is not None:
+            lat_obs = self.get_header_element("LAT-OBS")
+            if observat is not None and observat in observatories['Code']:
                 self.obs_code = observat
                 self.obs_loc_set = True
             elif obs_lat is not None:
@@ -76,8 +80,8 @@ class ImageMetadata:
                 self.obs_loc_set = True
             elif lat_obs is not None:
                 self.obs_lat = float(lat_obs)
-                self.obs_long = float(self.get_header_element("LONG_OBS"))
-                self.obs_alt = float(self.get_header_element("ALT_OBS"))
+                self.obs_long = float(self.get_header_element("LONG-OBS"))
+                self.obs_alt = float(self.get_header_element("ALT-OBS"))
                 self.obs_loc_set = True
             else:
                 self.obs_loc_set = False

@@ -6,7 +6,12 @@ A package that should hopefully be helpful to people working with shift-and-stac
 This package is based off of code developed by Jeremy Kubica for the [KBMOD](https://github.com/dirac-institute/kbmod) package.
 
 ## Setup
-Package will be pip installable soon. Until then,
+### Install from PyPI
+koffi is now pip installable! To get the latest version, just run:
+```bash
+pip install koffi
+```
+### Install from source
 In python virtual environment of your choice:
 ```bash
 git clone https://github.com/lincc-frameworks/koffi.git
@@ -27,7 +32,7 @@ image = koffi.ImageMetadata(filename)
 skybot_objects = koffi.skybot_search_frame(image)
 
 # JPL Horizons = get all possible objects in given image.
-jpl_objects = koffi.jpl.search_frame(image)
+jpl_objects = koffi.jpl_search_frame(image)
 ```
 
 We can also use koffi to check against a list of provided sources; the search functions will return a list of matches.
