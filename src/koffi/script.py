@@ -1,8 +1,10 @@
-from .koffi import ImageMetadata, skybot_search_frame, jpl_search_frame
-from astropy.table import QTable
-from astropy import units as u
 import argparse
 import sys
+
+from astropy import units as u
+from astropy.table import QTable
+
+from .koffi import ImageMetadata, jpl_search_frame, skybot_search_frame
 
 
 def main():
@@ -35,7 +37,7 @@ def main():
         ys.append(y)
 
     table = QTable(
-        data=[names, ras, decs, xs, ys], 
+        data=[names, ras, decs, xs, ys],
         names=["Object Name", "RA", "Dec", "x", "y"],
     )
     if args.format == "QTable":

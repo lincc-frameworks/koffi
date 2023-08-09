@@ -59,7 +59,10 @@ class ImageMetadata:
                 if "DATE-AVG" in hdu_list[0].header:
                     self.set_epoch(Time(hdu_list[0].header["DATE-AVG"], format="isot"))
                 elif "DATE-OBS" in hdu_list[0].header and "EXPTIME" in hdu_list[0].header:
-                    self.set_epoch(Time(hdu_list[0].header["DATE-OBS"], format="isot") + TimeDelta(hdu_list[0].header["EXPTIME"], format="sec")/2)
+                    self.set_epoch(
+                        Time(hdu_list[0].header["DATE-OBS"], format="isot")
+                        + TimeDelta(hdu_list[0].header["EXPTIME"], format="sec") / 2
+                    )
                 elif self.get_header_element(mjd_key) is not None:
                     self.set_epoch(Time(self.get_header_element(mjd_key), format="mjd"))
 
@@ -67,10 +70,10 @@ class ImageMetadata:
             # Since this doesn't seem to be standardized, we try some
             # documented versions.
             observat = self.get_header_element("OBSERVAT")
-            observatories = MPC.get_observatory_codes() # get list of MPC-defined observatory codes
+            observatories = MPC.get_observatory_codes()  # get list of MPC-defined observatory codes
             obs_lat = self.get_header_element("OBS-LAT")
             lat_obs = self.get_header_element("LAT-OBS")
-            if observat is not None and observat in observatories['Code']:
+            if observat is not None and observat in observatories["Code"]:
                 self.obs_code = observat
                 self.obs_loc_set = True
             elif obs_lat is not None:
