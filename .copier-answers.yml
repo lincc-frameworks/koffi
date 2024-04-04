@@ -1,16 +1,10 @@
 # Changes here will be overwritten by Copier
-_commit: v1.4.1
+_commit: v2.0.1
 _src_path: gh:lincc-frameworks/python-project-template
 author_email: maxwest@uw.edu
 author_name: Maxine West
-create_example_module: false
-custom_install: true
-include_docs: true
-include_notebooks: true
-mypy_type_checking: none
+custom_install: false
 package_name: koffi
-preferred_linter: black
 project_license: BSD
 project_name: koffi
-use_gitlfs: none
-use_isort: true
+project_organization: lincc-frameworks
