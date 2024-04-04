@@ -16,14 +16,10 @@ classifiers = [
 dynamic = ["version"]
 requires-python = ">=3.9"
 dependencies = [
-<<<<<<< before updating
     "ipykernel", # Support for Jupyter notebooks
     "astropy",
     "astroquery",
-    "dask",
     "tqdm"
-=======
->>>>>>> after updating
 ]
 
 [project.urls]
@@ -61,54 +57,3 @@ target-version = ["py39"]
 [tool.isort]
 profile = "black"
 line_length = 110
-<<<<<<< before updating
-=======
-
-[tool.ruff]
-line-length = 110
-target-version = "py39"
-
-[tool.ruff.lint]
-select = [
-    # pycodestyle
-    "E",
-    "W",
-    # Pyflakes
-    "F",
-    # pep8-naming
-    "N",
-    # pyupgrade
-    "UP",
-    # flake8-bugbear
-    "B",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # docstrings
-    "D101",
-    "D102",
-    "D103",
-    "D106",
-    "D206",
-    "D207",
-    "D208",
-    "D300",
-    "D417",
-    "D419",
-
-]
-
-ignore = [
-    "UP006", # Allow non standard library generics in type hints
-    "UP007", # Allow Union in type hints
-    "SIM114", # Allow if with same arms
-    "B028", # Allow default warning level
-    "SIM117", # Allow nested with
-    "UP015", # Allow redundant open parameters
-    "UP028", # Allow yield in for loop
-]
-
-[tool.coverage.run]
-omit=["src/koffi/_version.py"]
->>>>>>> after updating
