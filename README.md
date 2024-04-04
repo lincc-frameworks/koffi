@@ -1,6 +1,15 @@
 # koffi
 Known Objects From Fits Indices
 
+[![PyPI version](https://badge.fury.io/py/KOFFI.svg)](https://badge.fury.io/py/KOFFI)
+
+[![Template](https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen)](https://lincc-ppt.readthedocs.io/en/latest/)
+
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/lincc-frameworks/koffi/smoke-test.yml)](https://github.com/lincc-frameworks/koffi/actions/workflows/smoke-test.yml)
+[![codecov](https://codecov.io/gh/lincc-frameworks/koffi/graph/badge.svg?token=XS58T19IRJ)](https://codecov.io/gh/lincc-frameworks/koffi)
+[![GitHub issue custom search in repo](https://img.shields.io/github/issues-search/lincc-frameworks/koffi?color=purple&label=Good%20first%20issues&query=is%3Aopen%20label%3A%22good%20first%20issue%22)](https://github.com/lincc-frameworks/koffi/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+
+
 A package that should hopefully be helpful to people working with shift-and-stack algorithms and other solar system science use cases. Given an input of possible solar system objects (PotentialSources) relating either to an x and y coordinate of a FITS image or an RA and Dec coordinate with a timestamp, we provide an easy API for converting x and y coordinates into RA and Dec and querying the most well known solar system dynamics api services. Uses the IMCCE's SkyBoT VO tool (Berthier et. al. 2006) and JPL’s SSD (Solar System Dynamics) [API service](https://ssd.jpl.nasa.gov/).
 
 This package is based off of code developed by Jeremy Kubica for the [KBMOD](https://github.com/dirac-institute/kbmod) package.
@@ -100,4 +109,10 @@ sources = [ps1, ps2]
 possible_detections_skybot = koffi.skybot_query_known_objects_stack(sources, images)
 possible_detections_jpl = koffi.jpl_query_known_objects_stack(sources, images)
 ```
+
+## Acknowledgements
+
+This project is supported by Schmidt Sciences.
+
+The team acknowledges support from the DIRAC Institute in the Department of Astronomy at the University of Washington. The DIRAC Institute is supported through generous gifts from the Charles and Lisa Simonyi Fund for Arts and Sciences, and the Washington Research Foundation.
 
