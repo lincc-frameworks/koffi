@@ -140,9 +140,6 @@ dask-worker-space/
 tmp/
 
 # Mac OS
-<<<<<<< before updating
-.DS_Store
-=======
 .DS_Store
 
 # Airspeed Velocity performance results
@@ -151,4 +148,3 @@ _html/
 
 # Project initialization script
 .initialize_new_project.sh
->>>>>>> after updating
