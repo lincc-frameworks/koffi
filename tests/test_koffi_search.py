@@ -2,9 +2,9 @@ import io
 import json
 import tempfile
 import unittest
-import urllib.request as libreq
 from unittest import mock
 
+import requests
 from astropy.coordinates import Angle, SkyCoord
 from astropy.io import fits
 from astropy.table import QTable
@@ -24,13 +24,27 @@ class TestKoffiSearch(unittest.TestCase):
         self.mock_skybot_results["RA"] = [240334]
         self.mock_skybot_results["DEC"] = [-10.78208]
 
-        self.jpl_data = io.BytesIO(
+        self.jpl_data = requests.models.Response()
+        self.jpl_data.code = "expired"
+        self.jpl_data.error_type = "expired"
+        self.jpl_data.status_code = 400
+        self.jpl_data._content = (
             b'{"n_second_pass": 1,"data_second_pass": [["(2013 FD28)", "13:22:00.37", "-14 09\'58.3"]]}'
         )
 
-        self.jpl_data_second = io.BytesIO(
+        self.jpl_data_second = requests.models.Response()
+        self.jpl_data_second.code = "expired"
+        self.jpl_data_second.error_type = "expired"
+        self.jpl_data_second.status_code = 400
+        self.jpl_data_second._content = (
             b'{"n_second_pass": 1,"data_second_pass": [["(2013 FD28)", "13:22:00.37", "-14 09\'58.3"]]}'
         )
+
+        self.jpl_timeout = requests.models.Response()
+        self.jpl_timeout.code = "expired"
+        self.jpl_timeout.error_type = "expired"
+        self.jpl_timeout.status_code = 504
+        self.jpl_timeout.close = lambda: None
 
         self.source_skybot = PotentialSource()
         self.source_skybot.build_from_times_and_known_positions([[240334, -10.78208]], [59806.25])
@@ -133,7 +147,7 @@ class TestKoffiSearch(unittest.TestCase):
             self.assertRegex(jpl_query_string, regex_fov)
 
     def test_jpl_query_known_objects(self):
-        with mock.patch.object(libreq, "urlopen", return_value=self.jpl_data):
+        with mock.patch.object(requests, "get", return_value=self.jpl_data):
             with tempfile.TemporaryDirectory() as dir_name:
                 fname = "%s/tmp.fits" % dir_name
                 create_fake_fits_file(fname, 20, 30)
@@ -146,7 +160,7 @@ class TestKoffiSearch(unittest.TestCase):
                 self.assertEqual(results[0][1][1].dec.arcsecond, -50998.3)
 
     def test_jpl_query_known_objects_stack(self):
-        with mock.patch.object(libreq, "urlopen", side_effect=[self.jpl_data, self.jpl_data_second]):
+        with mock.patch.object(requests, "get", side_effect=[self.jpl_data, self.jpl_data_second]):
             with tempfile.TemporaryDirectory() as dir_name:
                 fname1 = "%s/tmp1.fits" % dir_name
                 fname2 = "%s/tmp2.fits" % dir_name
@@ -175,7 +189,7 @@ class TestKoffiSearch(unittest.TestCase):
             self.assertEqual(results[0][1].dec.arcsecond, -38815.488000000005)
 
     def test_jpl_query_search_frame(self):
-        with mock.patch.object(libreq, "urlopen", return_value=self.jpl_data):
+        with mock.patch.object(requests, "get", return_value=self.jpl_data):
             with tempfile.TemporaryDirectory() as dir_name:
                 fname = "%s/tmp.fits" % dir_name
                 create_fake_fits_file(fname, 20, 30)
@@ -186,3 +200,13 @@ class TestKoffiSearch(unittest.TestCase):
                 self.assertEqual(results[0][0], "(2013 FD28)")
                 self.assertEqual(results[0][1].ra.arcsecond, 721805.55)
                 self.assertEqual(results[0][1].dec.arcsecond, -50998.3)
+
+    def test_jpl_query_search_frame_timeout(self):
+        print(self.jpl_timeout)
+        with mock.patch.object(requests, "get", return_value=self.jpl_timeout):
+            with tempfile.TemporaryDirectory() as dir_name:
+                fname = "%s/tmp.fits" % dir_name
+                create_fake_fits_file(fname, 20, 30)
+                image = ImageMetadata(fname)
+                with self.assertRaises(RuntimeError):
+                    jpl_search_frame(image)

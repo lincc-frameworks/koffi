@@ -13,16 +13,10 @@ Acknowledgements: The known object matching uses the IMCCE's SkyBoT VO tool
 (Berthier et. al. 2006) and JPL’s SSD (Solar System Dynamics) API service.
 """
 
-import json
-import urllib.request as libreq
-
 import astropy.units as u
+import requests
 from astropy.coordinates import Angle, SkyCoord
-from astropy.io import fits
-from astropy.time import Time
-from astropy.wcs import WCS
 from astroquery.imcce import Skybot
-from astroquery.jplhorizons import Horizons
 from tqdm import tqdm
 
 # Import the data_tools packages directly in koffi so that they are
@@ -219,20 +213,28 @@ def jpl_search_frame(image):
 
     objects = []
 
-    with libreq.urlopen(query_string) as url:
-        feed = url.read().decode("utf-8")
-        results = json.loads(feed)
+    # JPL's certificate seems to be down temporarily.
+    # We should remove the `verify=False` eventually
+    # (but also give them some space, JPL almost got burned down...)
+    with requests.get(query_string, verify=False) as response:
+        if response.status_code == 504:
+            raise RuntimeError(
+                "Timeout error experienced. Consider using the subject line BATCH-LONG \
+                               email feature of jpl horizons at horizons@ssd.jpl.nasa.gov ."
+            )
+        else:
+            results = response.json()
 
-        if "warning" in results.keys() and results["warning"] == "no matching records":
-            return []
+    if "warning" in results.keys() and results["warning"] == "no matching records":
+        return []
 
-        num_results = results["n_second_pass"]
-        for item in results["data_second_pass"]:
-            name = item[0]
-            ra_str = item[1]
-            dec_str = item[2].replace("'", " ").replace('"', "")
-            sc = SkyCoord(ra_str, dec_str, unit=(u.hourangle, u.deg))
-            objects.append([name, sc])
+    num_results = results["n_second_pass"]
+    for item in results["data_second_pass"]:
+        name = item[0]
+        ra_str = item[1]
+        dec_str = item[2].replace("'", " ").replace('"', "")
+        sc = SkyCoord(ra_str, dec_str, unit=(u.hourangle, u.deg))
+        objects.append([name, sc])
 
     return objects
 
