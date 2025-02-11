@@ -46,6 +46,14 @@ class TestKoffiSearch(unittest.TestCase):
         self.jpl_timeout.status_code = 504
         self.jpl_timeout.close = lambda: None
 
+        self.jpl_data_none = requests.models.Response()
+        self.jpl_data_none.code = "expired"
+        self.jpl_data_none.error_type = "expired"
+        self.jpl_data_none.status_code = 400
+        self.jpl_data_none._content = (
+            b'{"n_second_pass": 1, "warning": "no mathcing records", "data_second_pass": []}'
+        )
+
         self.source_skybot = PotentialSource()
         self.source_skybot.build_from_times_and_known_positions([[240334, -10.78208]], [59806.25])
 
@@ -200,6 +208,17 @@ class TestKoffiSearch(unittest.TestCase):
                 self.assertEqual(results[0][0], "(2013 FD28)")
                 self.assertEqual(results[0][1].ra.arcsecond, 721805.55)
                 self.assertEqual(results[0][1].dec.arcsecond, -50998.3)
+
+    def test_jpl_query_search_frame_no_data(self):
+        with mock.patch.object(requests, "get", return_value=self.jpl_data_none):
+            with tempfile.TemporaryDirectory() as dir_name:
+                fname = "%s/tmp.fits" % dir_name
+                create_fake_fits_file(fname, 20, 30)
+                image = ImageMetadata(fname)
+
+                results = jpl_search_frame(image)
+                self.assertTrue(results is not None)
+                self.assertEqual(results, [])
 
     def test_jpl_query_search_frame_timeout(self):
         print(self.jpl_timeout)
